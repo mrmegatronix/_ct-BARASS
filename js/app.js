@@ -33,6 +33,10 @@ const state = {
         category: '',
         query: ''
     },
+    productFilter: {
+        category: '',
+        query: ''
+    },
     selectedCollectionId: null,
     menuMode: false
 };
@@ -69,6 +73,7 @@ function updateChrome() {
     document.getElementById('badgeCocktails').textContent = store.cocktails.length;
     document.getElementById('badgeShelf').textContent = bar.shelf.length;
     document.getElementById('badgeIngredients').textContent = store.ingredients.length;
+    document.getElementById('badgeProducts').textContent = store.products.length;
     document.getElementById('badgeShopping').textContent = bar.shoppingList.length;
     document.getElementById('sidebarMakeableCount').textContent = `${makeableCount} cocktail${makeableCount === 1 ? '' : 's'}`;
 
@@ -96,6 +101,7 @@ function renderView() {
         case 'cocktails': renderCocktails(container); break;
         case 'shelf': renderShelf(container); break;
         case 'ingredients': renderIngredients(container); break;
+        case 'products': renderProducts(container); break;
         case 'shopping': renderShopping(container); break;
         case 'collections': renderCollections(container); break;
         case 'calculators': renderCalculators(container); break;
@@ -503,6 +509,57 @@ function renderIngredients(container) {
     container.querySelectorAll('[data-open-ing]').forEach(el => {
         el.onclick = () => openIngredientDetailModal(el.dataset.openIng, () => { updateChrome(); renderIngredients(container); });
     });
+}
+
+function renderProducts(container) {
+    const pf = state.productFilter;
+    const q = (pf.query || state.globalQuery).trim().toLowerCase();
+
+    const list = store.products.filter(p => {
+        if (pf.category && p.category !== pf.category) return false;
+        if (q && !`${p.name} ${p.category} ${p.stockId}`.toLowerCase().includes(q)) return false;
+        return true;
+    });
+
+    container.innerHTML = `
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Coasters Tavern — Product List</h1>
+                <p class="page-subtitle">Loaded from beverage_product_list.txt • ${list.length} of ${store.products.length} products (${store.productLineItemCount} pour options across ${store.productCategories.length} categories)</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <input type="search" id="prodSearch" class="filter-input" placeholder="Search product name or stock ID..." value="${escapeHtml(pf.query)}">
+            <select id="prodCat" class="filter-select">
+                <option value="">All Categories (${store.productCategories.length})</option>
+                ${store.productCategories.map(c => `<option value="${escapeHtml(c)}" ${pf.category === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+            </select>
+        </div>
+
+        <div class="ingredient-grid">
+            ${list.map(p => {
+                const pours = p.variants
+                    .map(v => `${v.size}: $${v.price.toFixed(2)}`)
+                    .join(' • ');
+                return `
+                    <div class="ingredient-card" style="flex-direction:column;align-items:stretch;gap:8px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <div class="ingredient-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+                            <span class="badge badge-muted">${escapeHtml(p.stockId)}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <span class="badge badge-accent">${escapeHtml(p.category)}</span>
+                        </div>
+                        <div class="ingredient-sub" title="${escapeHtml(pours)}">${escapeHtml(pours)}</div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+
+    container.querySelector('#prodSearch').oninput = (e) => { pf.query = e.target.value; renderProducts(container); };
+    container.querySelector('#prodCat').onchange = (e) => { pf.category = e.target.value; renderProducts(container); };
 }
 
 function renderShopping(container) {

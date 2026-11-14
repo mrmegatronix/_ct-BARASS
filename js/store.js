@@ -1,16 +1,18 @@
 // Bar Assistant (_ct-BARASS) Data Store & Domain Engine
-const STORAGE_KEY = 'ct_barass_state_v1';
+import { mapProductsToShelfIds, parseProductListText } from './productParser.js';
+
+const STORAGE_KEY = 'ct_barass_state_v2';
 
 const DEFAULT_USER_STATE = {
     bars: [
         {
-            id: 'home-bar',
-            name: 'Home Bar',
+            id: 'coasters-tavern',
+            name: 'Coasters Tavern',
             shelf: [],
             shoppingList: []
         }
     ],
-    activeBarId: 'home-bar',
+    activeBarId: 'coasters-tavern',
     favorites: [],
     ratings: {}, // { [cocktailId]: { rating: number, note: string } }
     collections: [], // [{ id, name, description, cocktailIds: [] }]
@@ -30,6 +32,9 @@ export const store = {
     categories: [],
     tasteDescriptors: [],
     calculators: [],
+    products: [],
+    productCategories: [],
+    productLineItemCount: 0,
     user: structuredClone(DEFAULT_USER_STATE),
 
     // Computed indexes
@@ -50,7 +55,8 @@ export const store = {
             utensils,
             categories,
             tasteDescriptors,
-            calculators
+            calculators,
+            productListText
         ] = await Promise.all([
             fetch('data/cocktails.json').then(r => r.json()),
             fetch('data/ingredients.json').then(r => r.json()),
@@ -59,8 +65,14 @@ export const store = {
             fetch('data/base_utensils.json').then(r => r.json()),
             fetch('data/base_ingredient_categories.json').then(r => r.json()),
             fetch('data/base_taste_descriptors.json').then(r => r.json()),
-            fetch('data/calculators.json').then(r => r.json())
+            fetch('data/calculators.json').then(r => r.json()),
+            fetch('beverage_product_list.txt').then(r => r.text())
         ]);
+
+        const parsedProducts = parseProductListText(productListText);
+        this.products = parsedProducts.products;
+        this.productCategories = parsedProducts.categories;
+        this.productLineItemCount = parsedProducts.totalLineItems;
 
         this.baseCocktails = cocktails;
         this.baseIngredients = ingredients;
@@ -72,8 +84,13 @@ export const store = {
         this.calculators = calculators;
 
         this.methodMap = new Map(methods.map(m => [m.name.toLowerCase(), m]));
-        this.loadUserState();
+        const hasSaved = this.loadUserState();
         this.rebuildIndexes();
+        if (!hasSaved) {
+            const bar = this.getActiveBar();
+            bar.shelf = mapProductsToShelfIds(this.products, this.ingredientMap);
+            this.saveUserState();
+        }
     },
 
     loadUserState() {
@@ -88,11 +105,13 @@ export const store = {
                 if (!this.user.bars.some(b => b.id === this.user.activeBarId)) {
                     this.user.activeBarId = this.user.bars[0].id;
                 }
+                return true;
             }
         } catch (err) {
             console.error('Failed to load user state:', err);
             this.user = structuredClone(DEFAULT_USER_STATE);
         }
+        return false;
     },
 
     saveUserState() {
