@@ -6,7 +6,8 @@ import {
     openCocktailFormModal,
     openIngredientDetailModal,
     openIngredientFormModal,
-    openManageBarsModal
+    openManageBarsModal,
+    openQrModal
 } from './modals.js';
 
 const state = {
@@ -930,6 +931,10 @@ async function bootstrap() {
             renderView();
         };
         document.getElementById('btnManageBars').onclick = () => openManageBarsModal(() => { updateChrome(); renderView(); });
+        document.getElementById('btnQrShare').onclick = () => {
+            const base = window.location.href.split('#')[0];
+            openQrModal('Open Bar Assistant on Another Device', `${base}#${state.view}`);
+        };
         document.getElementById('btnBackup').onclick = () => openBackupModal(() => { updateChrome(); renderView(); });
         document.querySelectorAll('.unit-btn').forEach(btn => {
             btn.onclick = () => {
@@ -967,8 +972,27 @@ async function bootstrap() {
             }
         });
 
+        const applyHash = () => {
+            const h = window.location.hash.replace(/^#/, '');
+            if (!h) return;
+            if (h.startsWith('cocktail=')) {
+                const cId = decodeURIComponent(h.slice('cocktail='.length));
+                state.view = 'cocktails';
+                updateChrome();
+                renderView();
+                openCocktailDetailModal(cId, () => { updateChrome(); renderView(); });
+                return;
+            }
+            const validViews = ['dashboard', 'cocktails', 'shelf', 'ingredients', 'products', 'shopping', 'collections', 'calculators', 'reference'];
+            if (validViews.includes(h)) {
+                state.view = h;
+            }
+        };
+
+        applyHash();
         updateChrome();
         renderView();
+        window.addEventListener('hashchange', () => { applyHash(); updateChrome(); renderView(); });
     } catch (err) {
         console.error(err);
         document.getElementById('loadingState').innerHTML = `<p style="color:var(--danger);">Failed to load Bar Assistant data: ${escapeHtml(err.message)}</p>`;

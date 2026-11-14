@@ -159,6 +159,7 @@ export function openCocktailDetailModal(cocktailId, onRefresh) {
             </div>
             <div class="modal-footer no-print">
                 <button class="btn btn-danger btn-sm" id="btnDeleteCocktail" style="margin-right:auto;">Delete</button>
+                <button class="btn btn-secondary btn-sm" id="btnCocktailQr">QR Code</button>
                 <button class="btn btn-secondary btn-sm" id="btnExportCocktailJson">Export JSON</button>
                 <button class="btn btn-secondary btn-sm" onclick="window.print()">Print Recipe</button>
                 <button class="btn btn-primary btn-sm" data-close-modal>Close</button>
@@ -225,6 +226,10 @@ export function openCocktailDetailModal(cocktailId, onRefresh) {
                 renderBody();
             };
         }
+        root.querySelector('#btnCocktailQr').onclick = () => {
+            const base = window.location.href.split('#')[0];
+            openQrModal(`Open "${c.name}" on Another Device`, `${base}#cocktail=${encodeURIComponent(c._id)}`);
+        };
         root.querySelector('#btnExportCocktailJson').onclick = () => {
             const blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -656,6 +661,66 @@ export function openBackupModal(onRefresh) {
             showToast('User data reset', 'danger');
             closeModal();
             onRefresh?.();
+        }
+    };
+}
+
+export function openQrModal(title = 'Open on Another Device', initialUrl = window.location.href) {
+    const ghPagesBase = 'https://mrmegatronix.github.io/_ct-BARASS/';
+    const hashPart = initialUrl.includes('#') ? '#' + initialUrl.split('#')[1] : '';
+    const ghUrl = ghPagesBase + hashPart;
+
+    const renderQrSvg = (url) => {
+        if (typeof window.qrcode !== 'function') return '<p style="color:var(--danger);">QR generator unavailable.</p>';
+        const qr = window.qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
+        return qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true });
+    };
+
+    mountModal(`
+        <div class="modal-header">
+            <h2 class="modal-title">${escapeHtml(title)}</h2>
+            <button class="btn btn-ghost btn-sm" data-close-modal>✕</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <p style="color:var(--text-secondary);margin-bottom:14px;">Scan with your phone or tablet camera to open directly on another device.</p>
+            <div id="qrBox" style="display:inline-block;background:#fff;padding:12px;border-radius:12px;width:240px;height:240px;margin-bottom:14px;">
+                ${renderQrSvg(initialUrl)}
+            </div>
+            <div class="form-group" style="text-align:left;">
+                <label class="form-label">Target URL</label>
+                <input type="text" id="qrUrlInput" class="form-control" value="${escapeHtml(initialUrl)}">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" id="btnQrUseCurrent">Current URL</button>
+                <button class="btn btn-secondary btn-sm" id="btnQrUseGh">GitHub Pages URL</button>
+                <button class="btn btn-primary btn-sm" id="btnQrCopy">Copy URL</button>
+            </div>
+        </div>
+    `, true);
+
+    const root = modalRoot();
+    const urlInput = root.querySelector('#qrUrlInput');
+    const qrBox = root.querySelector('#qrBox');
+    const updateQr = (val) => {
+        urlInput.value = val;
+        qrBox.innerHTML = renderQrSvg(val || ghUrl);
+    };
+
+    urlInput.oninput = (e) => {
+        qrBox.innerHTML = renderQrSvg(e.target.value || ghUrl);
+    };
+    root.querySelector('#btnQrUseCurrent').onclick = () => updateQr(initialUrl);
+    root.querySelector('#btnQrUseGh').onclick = () => updateQr(ghUrl);
+    root.querySelector('#btnQrCopy').onclick = async () => {
+        try {
+            await navigator.clipboard.writeText(urlInput.value);
+            showToast('URL copied to clipboard', 'success');
+        } catch {
+            urlInput.select();
+            document.execCommand('copy');
+            showToast('URL copied', 'success');
         }
     };
 }
