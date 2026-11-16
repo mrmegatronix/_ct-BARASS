@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- PIN-Coded Access Gate (pin-coded-access standard) -->
+    <div id="pinGate" class="pin-gate hidden" aria-label="PIN Access Screen">
+        <div class="pin-gate-card">
+            <img src="assets/logo.svg" alt="Bar Assistant" class="pin-gate-logo">
+            <h1 class="pin-gate-title">Bar Assistant</h1>
+            <p class="pin-gate-sub">Enter 4-digit access PIN to unlock Coasters Tavern</p>
+            <div id="pinOtpContainer"></div>
+            <button type="button" id="btnPinClear" class="btn btn-ghost btn-sm" style="margin-top:10px;">Clear</button>
+        </div>
+    </div>
+
     <div id="app" class="app-shell">
         <!-- Top Header -->
         <header class="topbar">
@@ -55,6 +66,10 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span>Backup</span>
                 </button>
+
+                <button id="btnLockApp" class="btn btn-ghost btn-sm" title="Lock Session">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </button>
             </div>
         </header>
 
@@ -95,6 +110,10 @@
                     <button class="nav-item" data-view="collections">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                         <span>Collections &amp; Menu</span>
+                    </button>
+                    <button class="nav-item" data-view="listmaker">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>List &amp; Print Maker</span>
                     </button>
                     <button class="nav-item" data-view="calculators">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>

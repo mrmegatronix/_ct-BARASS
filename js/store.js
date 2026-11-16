@@ -20,6 +20,7 @@ const DEFAULT_USER_STATE = {
     deletedCocktailIds: [],
     customIngredients: [],
     deletedIngredientIds: [],
+    printGallery: [],
     unit: 'ml'
 };
 
@@ -463,6 +464,17 @@ export const store = {
 
     deleteCollection(collectionId) {
         this.user.collections = this.user.collections.filter(c => c.id !== collectionId);
+        this.saveUserState();
+    },
+
+    saveMenuToGallery(menuObj) {
+        if (!Array.isArray(this.user.printGallery)) this.user.printGallery = [];
+        this.user.printGallery.unshift(menuObj);
+        this.saveUserState();
+    },
+
+    deleteMenuFromGallery(id) {
+        this.user.printGallery = (this.user.printGallery || []).filter(m => m.id !== id);
         this.saveUserState();
     },
 

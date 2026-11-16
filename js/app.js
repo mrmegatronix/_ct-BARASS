@@ -1,5 +1,7 @@
 import { store } from './store.js';
 import { escapeHtml, getPrimaryImage, renderCocktailCardHtml, showToast } from './utils.js';
+import { ensurePinUnlocked, lockSession } from './pinGate.js';
+import { renderListMakerView } from './listMaker.js';
 import {
     openBackupModal,
     openCocktailDetailModal,
@@ -105,6 +107,7 @@ function renderView() {
         case 'products': renderProducts(container); break;
         case 'shopping': renderShopping(container); break;
         case 'collections': renderCollections(container); break;
+        case 'listmaker': renderListMakerView(container); break;
         case 'calculators': renderCalculators(container); break;
         case 'reference': renderReference(container); break;
         default: renderDashboard(container);
@@ -913,6 +916,7 @@ function renderReference(container) {
 
 async function bootstrap() {
     startClock();
+    await ensurePinUnlocked();
     try {
         await store.init();
         document.getElementById('loadingState').classList.add('hidden');
@@ -936,6 +940,7 @@ async function bootstrap() {
             openQrModal('Open Bar Assistant on Another Device', `${base}#${state.view}`);
         };
         document.getElementById('btnBackup').onclick = () => openBackupModal(() => { updateChrome(); renderView(); });
+        document.getElementById('btnLockApp').onclick = () => lockSession();
         document.querySelectorAll('.unit-btn').forEach(btn => {
             btn.onclick = () => {
                 store.user.unit = btn.dataset.unit;
@@ -983,7 +988,7 @@ async function bootstrap() {
                 openCocktailDetailModal(cId, () => { updateChrome(); renderView(); });
                 return;
             }
-            const validViews = ['dashboard', 'cocktails', 'shelf', 'ingredients', 'products', 'shopping', 'collections', 'calculators', 'reference'];
+            const validViews = ['dashboard', 'cocktails', 'shelf', 'ingredients', 'products', 'shopping', 'collections', 'listmaker', 'calculators', 'reference'];
             if (validViews.includes(h)) {
                 state.view = h;
             }
